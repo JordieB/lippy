@@ -15,30 +15,11 @@ This project uses the `gcalwrapper` module to interact with the Google Calendar 
 
 ## Installation
 
-1. Clone the repository:
-```bash
-git clone https://github.com/JordieB/lippy.git
-```
-2. Change directory to the project folder:
-```bash
-cd lippy
-```
-3. Install the required dependencies using `pip` or `conda`:
-```bash
-pip install -r requirements.txt
-```
-4. Set up environment variables for your Google Calendar API credentials and calendar ID:
-```bash
-export GOOGLE_CAL_ID="your_calendar_id"
-```
-5. Replace the `service_file_path` variable in the code with the path to your Google Calendar API service file in PKL format.
+Under Construction
 
 ## Usage
 
-1. Run the main script:
-```bash
-python main.py
-```
+Under Construction
 
 ## Contributing
 
