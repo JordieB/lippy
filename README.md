@@ -1,4 +1,4 @@
-# Project Title
+# Lippy
 
 A Python application to retrieve upcoming events from Google Calendar and use an AI language model to find the next meeting.
 
