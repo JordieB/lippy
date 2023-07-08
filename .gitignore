@@ -130,3 +130,6 @@ dmypy.json
 
 # pylint
 pylint.log
+
+# personal data
+data/
