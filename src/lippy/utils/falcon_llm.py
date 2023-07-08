@@ -65,7 +65,7 @@ class FalconLLM(LLM):
         
         sequences = self.falcon_pipeline(
             prompt,
-            max_length=200,
+            max_length=1000,
             do_sample=True,
             top_k=10,
             num_return_sequences=1,
