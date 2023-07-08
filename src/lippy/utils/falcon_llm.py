@@ -83,6 +83,7 @@ class FalconLLM(LLM):
         )
         answer = ", ".join([seq['generated_text'] for seq in sequences])
         op = self.voice.say(answer.split('Helpful Answer:')[1])
+        print(op)
         self.voice.save_audio(op, "output.wav",overwrite=True)
         return answer
 
