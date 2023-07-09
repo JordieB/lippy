@@ -1,15 +1,12 @@
-# import openai
+import os
 
-# audio_file = open("/path/to/file/audio.mp3", "rb")
-# transcript = openai.Audio.transcribe("whisper-1", audio_file)
+import whisper
 
 
-import sounddevice as sd
-from scipy.io.wavfile import write
+here_dir = os.path.dirname(os.path.abspath(lippy.__file__))
+data_dir = os.path.join(here, os.pardir, os.pardir, os.pardir, 'data')
+wav_fp = os.path.join(data_dir, 'audio', 'output.wav')
 
-fs = 44100  # Sample rate
-seconds = 3  # Duration of recording
-
-myrecording = sd.rec(int(seconds * fs), samplerate=fs, channels=2)
-sd.wait()  # Wait until recording is finished
-write('output.wav', fs, myrecording)  # Save as WAV file 
+model = whisper.load_model('base')
+result = model.transcribe(wav_fp)
+print(result['text'])

@@ -52,6 +52,7 @@ class FalconLLM(LLM):
     def _call(
             self,
             prompt: str,
+            speak: bool = True,
             stop: List[str] = None,
             run_manager: CallbackManagerForLLMRun = None,
     ) -> str:
@@ -81,13 +82,13 @@ class FalconLLM(LLM):
             num_return_sequences=1,
             eos_token_id=self.falcon_tokenizer.eos_token_id
         )
-        answer = ", ".join([seq['generated_text'] for seq in sequences])
-        op = self.voice.say(answer.split('Helpful Answer:')[1])
-        print(op)
-        self.voice.save_audio(op, "output.wav",overwrite=True)
+        resp = ", ".join([seq['generated_text'] for seq in sequences])
+        answer = resp.split('Helpful Answer:')[1]
+        print(answer)
+        self.voice.say(answer)
         return answer
 
-
+    
     # @property
     # def _identifying_params(self) -> Mapping[str, Any]:
     #     """
@@ -97,9 +98,8 @@ class FalconLLM(LLM):
     #         Mapping[str, Any]: Dictionary with identifying parameters.
     #     """
     #     return {"n": self.n}
-    
 
 if __name__ == '__main__':
     llm = FalconLLM()
     print(llm.endpoint.run(("What impacts the pH of a sample? Please provide a detailed answer.")))
-    
+     

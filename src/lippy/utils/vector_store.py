@@ -10,7 +10,7 @@ from langchain.document_loaders import DirectoryLoader
 # Provide retriever for use in RetrievalQA chain
 
 class db:
-    def __init__(self,chunkSize=1000):
+    def __init__(self,chunkSize=500):
         self.pathDB = "/home/ubuntu/Tehas/lippy/data/db"
         self.splitter = RecursiveCharacterTextSplitter(chunk_size=chunkSize, chunk_overlap=0)
         self.embeddings = HuggingFaceInstructEmbeddings()

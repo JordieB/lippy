@@ -2,6 +2,7 @@ import os
 import torch
 from scipy.io import wavfile
 
+
 class Speaker:
     def __init__(self, base_dir: str = "audio_files"):
         """
@@ -31,8 +32,60 @@ class Speaker:
             speaker=self.model_id
         )
         self.model.to(self.device)
+        
+    def split_into_sentences(input_string):
+        # Split the input string into individual sentences
+        sentences = input_string.split('. ')
 
-    def say(self, input: str) -> torch.Tensor:
+        # Initialize variables
+        result = []
+        current_sentence = ''
+
+        # Iterate over each sentence
+        for sentence in sentences:
+            # Append the current sentence and the next sentence
+            temp = current_sentence + sentence + '. '
+
+            # Check if the combined sentence is within the limit
+            if len(temp) <= 900:
+                current_sentence = temp
+            else:
+                # Split the sentence at word boundaries
+                words = sentence.split()
+                temp = current_sentence
+
+                for word in words:
+                    # Check if adding the word exceeds the limit
+                    if len(temp) + len(word) <= 900:
+                        temp += word + ' '
+                    else:
+                        # Add the current sentence to the result
+                        result.append(temp)
+                        temp = word + ' '
+
+                # Add the remaining sentence to the result
+                if temp.strip():
+                    result.append(temp)
+
+                current_sentence = ''
+
+        # Add the last sentence to the result
+        if current_sentence.strip():
+            result.append(current_sentence)
+
+        return result
+
+    def say(self, input:str) -> List:
+        strings = split_into_sentences(input)
+        outputs = torch.empty
+        for i, string in enumerate(strings):
+            outputTensor = self.speak(string)
+            torch.cat((outputs, outputTensor))
+        self.save_audio(outputs, f'output.wav',True)
+            
+        return outputs
+    
+    def speak(self, input: str) -> torch.Tensor:
         """
         Generates speech from the input text.
 
