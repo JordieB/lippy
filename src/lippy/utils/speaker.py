@@ -33,7 +33,7 @@ class Speaker:
         )
         self.model.to(self.device)
         
-    def split_into_sentences(input_string):
+    def split_into_sentences(self, input_string):
         # Split the input string into individual sentences
         sentences = input_string.split('. ')
 
@@ -75,12 +75,13 @@ class Speaker:
 
         return result
 
-    def say(self, input:str) -> List:
-        strings = split_into_sentences(input)
-        outputs = torch.empty
+    def say(self, input:str) -> torch.Tensor:
+        strings = self.split_into_sentences(input)
+        outputs = []
         for i, string in enumerate(strings):
             outputTensor = self.speak(string)
-            torch.cat((outputs, outputTensor))
+            outputs.append(outputTensor)
+        outputs = torch.cat(outputs)
         self.save_audio(outputs, f'output.wav',True)
             
         return outputs
@@ -125,3 +126,15 @@ class Speaker:
 
         print(f'Saving {filename} to {self.base_dir}')
         wavfile.write(path, self.samp, audio_output.detach().numpy())
+
+if __name__ == "__main__":
+    voice = Speaker("/home/ubuntu/Tehas/lippy/data/audio")
+    text = """
+1. Gas chromatography is a separation technique that separates compounds in a gaseous mixture based on their physical properties. It is used in the field of chemical analysis to separate and identify various elements present in a sample. The process involves passing a gas through a small column containing a stationary phase. The stationary phase is usually packed into the column to separate the molecules. The molecules then interact with each other and the stationary phase, which leads to a separation and identification of individual components in the mixture.
+2. The stationary phase in gas chromatography is a substance that has a high affinity for certain molecules. The stationary phase material needs to be inert, meaning that it will not react with the molecules that are being separated. A common type of stationary phase used in gas chromatography is a solid catalyst. In gas chromatography, the gas and the stationary phase flow through the column at different rates and are combined at the inlet. The gas is usually passed in a carrier gas to maintain a constant flow rate.
+3. Gas chromatography has a wide range of applications, from pharmaceutical analysis to forensics. It is used to analyze components in air, water, and soil. The gas chromatography process is used in the analysis of drugs, pesticides, and heavy metals in environmental samples, and to detect impurities in industrial gases. Gas chromatography can also be used to analyze the components of gases produced by combustion or chemical processes.
+4. To separate and identify components in a gas mixture, a gas chromatography process must be used. Gas chromatography involves the use of a stationary phase material that interacts with the molecules in a gas mixture. The stationary phase material is packed into the gas column and then activated to form a high-affinity chemical bond between the gas molecules and the stationary phase. The molecules are then separated according to their different affinities, and identified by the specific reaction they undergo with the stationary phase. The result is a mixture of gas components, which can be used for identification and quantification purposes.
+5. The main components of a gas chromatography process are the gas source (usually air or nitrogen), column (containing the stationary phase material), and detector. The gas source is typically compressed and introduced into the column to create the gas chromatography flow at a pressure lower than atmospheric pressure. The gas mixture is then introduced into the column to separate and identify components in the mixture.
+6. Gas chromatography has several applications in the separation and detection of components in gaseous mixtures, such as chemical analysis of food and beverage, analysis of pharmaceutical products, and environmental analysis. The separation of gas components using gas chromatography is an effective method to achieve a high degree of resolution and accuracy. Gas chromatography is also used in laboratories and industry to detect the presence of impurities in the atmosphere. The identification of compounds present in a gas mixture is achieved through the reaction of these components with the stationary phase material in the column. The detection of compounds using gas chromatography is used to ensure the quality of food and beverages as well as to meet strict environmental regulations.
+"""
+    voice.say(text)
