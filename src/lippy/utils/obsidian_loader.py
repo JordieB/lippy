@@ -1,6 +1,6 @@
 import re
 from langchain.document_loaders.base import BaseLoader
-from pathlib import Path
+from pathlib import Path, PosixPath
 from typing import List
 from langchain.text_splitter import LineType
 from langchain.docstore.document import Document
@@ -81,7 +81,7 @@ class ObsidianLoader(BaseLoader):
             for chunk in aggregated_chunks
         ]
 
-    def split_text(self, text: str, pathObj: pathlib.PosixPath) -> List[Document]:
+    def split_text(self, text: str, pathObj: PosixPath) -> List[Document]:
         """Split markdown file
         Args:
             text: Markdown file"""
@@ -96,7 +96,15 @@ class ObsidianLoader(BaseLoader):
         # Keep track of the nested header structure
         # header_stack: List[Dict[str, Union[int, str]]] = []
         header_stack: List[HeaderType] = []
-        initial_metadata: Dict[str, str] = {}
+        front_matter = self._parse_front_matter(text)
+        initial_metadata: Dict[str, str] = {
+            "source": str(pathObj.name),
+            "path": str(pathObj),
+            "created": pathObj.stat().st_ctime,
+            "last_modified": pathObj.stat().st_mtime,
+            "last_accessed": pathObj.stat().st_atime,
+            **front_matter,
+        }
     
         for line in lines:
             stripped_line = line.strip()
@@ -187,18 +195,8 @@ class ObsidianLoader(BaseLoader):
                 text = f.read()
 
             pageDocs = self.split_text(text, p)
-            # front_matter = self._parse_front_matter(text)
-            # text = self._remove_front_matter(text)
-            # # metadata = {
-            # #     "source": str(p.name),
-            # #     "path": str(p),
-            # #     "created": p.stat().st_ctime,
-            # #     "last_modified": p.stat().st_mtime,
-            # #     "last_accessed": p.stat().st_atime,
-            # #     **front_matter,
-            # # }
             docs.append(pageDocs)
-
+        docs = [ele for inner_list in docs for ele in inner_list]
         return docs
 
 
@@ -279,7 +277,7 @@ class ObsidianLoader(BaseLoader):
 #                     # Ensure we are tracking the header as metadata
 #                     if name is not None:
 #                         # Get the current header level
-#                         current_header_level = sep.count("#")
+#                         current_header_level = sepathObj.count("#")
 
 #                         # Pop out headers of lower or same level from the stack
 #                         while (
