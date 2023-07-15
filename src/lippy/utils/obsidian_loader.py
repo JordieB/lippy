@@ -4,6 +4,7 @@ from pathlib import Path, PosixPath
 from typing import List
 from langchain.text_splitter import LineType
 from langchain.docstore.document import Document
+import pdb
 
 class ObsidianLoader(BaseLoader):
     """Loader that loads Obsidian files from disk."""
@@ -107,7 +108,8 @@ class ObsidianLoader(BaseLoader):
         }
     
         for line in lines:
-            stripped_line = line.strip()
+            # stripped_line = line.strip()
+            stripped_line = line            # Maintain heirarchical structure
             # Check each line against each of the header types (e.g., #, ##)
             for sep, name in self.headers_to_split_on:
                 # Check if line starts with a header that we intend to split on
@@ -150,7 +152,7 @@ class ObsidianLoader(BaseLoader):
                     if current_content:
                         lines_with_metadata.append(
                             {
-                                "content": "\n".join(current_content),
+                                "content": ' > '.join([header["data"] for header in header_stack]) + '\n' +  "\n".join(current_content),
                                 "metadata": current_metadata.copy(),
                             }
                         )
@@ -163,7 +165,7 @@ class ObsidianLoader(BaseLoader):
                 elif current_content:
                     lines_with_metadata.append(
                         {
-                            "content": "\n".join(current_content),
+                            "content": ' > '.join([header["data"] for header in header_stack]) + '\n' + "\n".join(current_content),
                             "metadata": current_metadata.copy(),
                         }
                     )
@@ -173,7 +175,7 @@ class ObsidianLoader(BaseLoader):
 
         if current_content:
             lines_with_metadata.append(
-                {"content": "\n".join(current_content), "metadata": current_metadata}
+                {"content": ' > '.join([header["data"] for header in header_stack]) + '\n' + "\n".join(current_content), "metadata": current_metadata}
             )
 
         # lines_with_metadata has each line with associated header metadata
@@ -342,3 +344,7 @@ class ObsidianLoader(BaseLoader):
 #                 Document(page_content=chunk["content"], metadata=chunk["metadata"])
 #                 for chunk in lines_with_metadata
 #             ]
+
+if __name__ == "__main__":
+    loader = ObsidianLoader("/home/theatasigma/lippy/data/vault/2 - Notes")
+    docs = loader.load()

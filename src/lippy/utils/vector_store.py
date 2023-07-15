@@ -31,17 +31,24 @@ class db:
 
     def retriever(self):
         self.injest()
-        return self.vectordb.as_retriever() if self.vectordb is not None else None
+        return self.vectordb.as_retriever(search_type="similarity_score_threshold", search_kwargs={"score_threshold": .5, "k":5}) if self.vectordb is not None else None
 
 if __name__ == '__main__':
     # from falcon_llm import FalconLLM
     # llm = FalconLLM()
-    # db = db()
-    loader = ObsidianLoader("/home/ubuntu/Tehas/lippy/data/vault/2 - Notes")
-    docs = loader.load()
+    # loader = ObsidianLoader("/home/theatasigma/lippy/data/vault/2 - Notes")
+    # docs = loader.load()
+    db = db()
+    db.pathDB="/home/theatasigma/lippy/data/db" 
+    db.injest("/home/theatasigma/lippy/data/vault/2 - Notes")
+    # ret = db.vectordb.as_retriever(search_type="similarity_score_threshold", search_kwargs={"score_threshold": .5, "k":5})
+    # docs = ret.get_relevant_documents("what are the effects of DO on water?")
+    docs = db.vectordb.similarity_search_with_score("what are the effects of DO on water?", k=5)
     
     # print(inspect.getsource(ObsidianLoader))
     
     # texts = db.splitter.split_texts(docs)
-    print(len(docs))
-    print(docs[1])
+    print(db.vectordb._collection_)
+    # for i in range(len(docs)):
+    #     print("-----")
+    #     print(docs[i])
