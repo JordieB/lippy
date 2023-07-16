@@ -1,4 +1,4 @@
-import nltk
+from nltk import sent_tokenize,download
 import numpy as np
 from scipy.io import wavfile
 # from bark.generation import generate_text_semantic, preload_models
@@ -6,6 +6,7 @@ from scipy.io import wavfile
 from bark import generate_audio, SAMPLE_RATE
 import os
 from IPython.display import Audio
+# download('punkt')
 
 def save_audio(
     audio_output,
@@ -35,11 +36,11 @@ def save_audio(
     with open(path, 'wb') as f:
         f.write(op.data)
 
-def bark_speak(text, output_fn="bark_output", temp=0.8, wave_temp=0.8):
+def bark_speak(text,speaker="v2/en_speaker_3", output_fn="bark_output", temp=0.8, wave_temp=0.8):
     print(f"[BARK] speak: {text[:100]}...")
     sentences = sent_tokenize(text)
     print(f"[BARK] num tokens: {len(sentences)}")
-    speaker = "v2/en_speaker_3"
+    # speaker = "/home/ubuntu/Tehas/lippy/voices/Dalinar-4_t7_w7_6.npz"
     silence = np.zeros(int(0.25 * SAMPLE_RATE))
     pieces = []
     for i, sent in enumerate(sentences):
@@ -48,7 +49,13 @@ def bark_speak(text, output_fn="bark_output", temp=0.8, wave_temp=0.8):
     print(f"[BARK] wav: {np.concatenate(pieces)}")
     save_audio(np.concatenate(pieces), pathAudio, f"{output_fn}.wav",True)
 
-base_dir = "/home/ubuntu/Tehas/lippy/data/audio"
+pathAudio = "/home/ubuntu/Tehas/lippy/data/audio"
 samp = SAMPLE_RATE
 sample_text = "[Lovingly, passionately] Memory is often our only connection to who we used to be. Memories are fossils, the bones left by dead versions of ourselves. More potently, our minds are a hungry audience, craving only the peaks and valleys of experience. The bland erodes, leaving behind distinctive bits to be remembered again and again. Painful or passionate, surreal or sublime, we cherish those little rocks of peak experience, polishing them with the ever-smoothing touch of recycled proxy living. In doing, like pagans praying to a sculpted mud figure, we make our memories the gods which judge our current lives."
-bark_speak(sample_text, "wit_mem")
+for i in range(4):
+    bark_speak(sample_text, "/home/ubuntu/Tehas/lippy/voices/StormFather_seed-1.npz", f"wit_mem_st_{i}")
+
+# for root, dirs, files in os.walk("/home/ubuntu/Tehas/lippy/voices/"):
+#     for file in files:
+#         # print(root+file)
+#         bark_speak(sample_text, speaker=root+file, output_fn=f"wit_mem_{file}")
