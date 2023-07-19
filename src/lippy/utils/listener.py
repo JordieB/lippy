@@ -1,12 +1,16 @@
-import os
-
 import whisper
 
+class Listener:
+    def __init__(self):
+        self.model = whisper.load_model('base')
+    
+    def transcribe(self, pathWav):
+        print(f"Transcribing {pathWav.split('/')[-1]}")
+        return self.model.transcribe(pathWav)
 
-here_dir = os.path.dirname(os.path.abspath(lippy.__file__))
-data_dir = os.path.join(here, os.pardir, os.pardir, os.pardir, 'data')
-wav_fp = os.path.join(data_dir, 'audio', 'output.wav')
 
-model = whisper.load_model('base')
-result = model.transcribe(wav_fp)
-print(result['text'])
+if __name__ == "__main__":
+    wav_fp = "/home/ubuntu/Tehas/lippy/example/Bark/wit_mem_passion.wav"
+
+    listener = Listener()
+    print(listener.transcribe(wav_fp)['text'])

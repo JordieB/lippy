@@ -28,6 +28,7 @@ openai-whisper = "^20230314"
 bs4 = "^0.0.1"
 ebooklib = "^0.18"
 nltk = "^3.8.1"
+rouge-score = "^0.1.2"
 
 
 [build-system]

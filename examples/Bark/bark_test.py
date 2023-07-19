@@ -1,12 +1,10 @@
 from nltk import sent_tokenize,download
 import numpy as np
-from scipy.io import wavfile
-# from bark.generation import generate_text_semantic, preload_models
-# bark.api import semantic_to_waveform
 from bark import generate_audio, SAMPLE_RATE
 import os
 from IPython.display import Audio
 # download('punkt')
+from lippy.utils.listener import Listener
 
 def save_audio(
     audio_output,
@@ -47,14 +45,18 @@ def bark_speak(text,speaker="v2/en_speaker_3", output_fn="bark_output", temp=0.8
         audio_array = generate_audio(sent, history_prompt=speaker, text_temp=temp, waveform_temp=wave_temp)
         pieces += [audio_array, silence.copy()]
     print(f"[BARK] wav: {np.concatenate(pieces)}")
-    save_audio(np.concatenate(pieces), pathAudio, f"{output_fn}.wav",True)
+    save_audio(np.concatenate(pieces), pathBase, f"{output_fn}.wav",True)
 
-pathAudio = "/home/ubuntu/Tehas/lippy/data/audio"
+pathBase = "/home/ubuntu/Tehas/lippy/data/audio/"
+pathOP = "bark_test_op"
+pathAudio = pathBase + pathOP
 samp = SAMPLE_RATE
-sample_text = "[Lovingly, passionately] Memory is often our only connection to who we used to be. Memories are fossils, the bones left by dead versions of ourselves. More potently, our minds are a hungry audience, craving only the peaks and valleys of experience. The bland erodes, leaving behind distinctive bits to be remembered again and again. Painful or passionate, surreal or sublime, we cherish those little rocks of peak experience, polishing them with the ever-smoothing touch of recycled proxy living. In doing, like pagans praying to a sculpted mud figure, we make our memories the gods which judge our current lives."
-for i in range(4):
-    bark_speak(sample_text, "/home/ubuntu/Tehas/lippy/voices/StormFather_seed-1.npz", f"wit_mem_st_{i}")
-
+sample_text = 'So when one student complained to my teacher Ajahn Chah that in his very busy life he did not have time to meditate, Ajahn Chah laughed and said, "Do you have time to breathe? If you are determined, you must simply pay attention. This is our practice, wherever you are, whatever is happening: to breathe, to be fully present, to see what is true.'
+bark_speak(sample_text, "/home/ubuntu/Tehas/lippy/voices/StormFather_seed-1.npz", pathOP)
+listener = Listener()
+promptTranscript = listener.transcribe(pathAudio + ".wav")
+print(f"Ground Truth: {sample_text}")
+print(f"Transcription: {promptTranscript['text']}")
 # for root, dirs, files in os.walk("/home/ubuntu/Tehas/lippy/voices/"):
 #     for file in files:
 #         # print(root+file)
