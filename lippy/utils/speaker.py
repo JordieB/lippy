@@ -5,6 +5,9 @@ from nltk import sent_tokenize, download
 import numpy as np
 from bark import generate_audio, SAMPLE_RATE, preload_models
 from pathlib import Path
+from lippy.utils.listener import Listener
+from rouge_score import rouge_scorer
+from IPython.display import Audio
 
 PROJ_DIR = Path(__file__).resolve().parents[2]
 
@@ -13,12 +16,12 @@ class Speaker:
         self,
         backend="bark",
         speaker_id="Dalinar-1_t8_w8_7",
-        op_dir=str(PROJ_DIR / "data/audio"),
-        custom_voice_dir=str(PROJ_DIR / "data/voices"),
+        op_dir=PROJ_DIR / "data/audio",
+        custom_voice_dir=PROJ_DIR / "voices",
         # TODO: fix this so it's either (a) OS-independent and/or (b) only uses
         #   PROJ_DIR
         # TODO: make PEP8 compliant ... somehow
-        voice_dir=str(Path.home() / ".local/lib/python3.8/site-packages/bark/assets/prompts/v2/")
+        voice_dir=Path.home() / Path(".local/lib/python3.8/site-packages/bark/assets/prompts/v2/")
     ):
         """
         Initializes the Speaker class.
@@ -47,12 +50,14 @@ class Speaker:
                 "sample_rate": SAMPLE_RATE,
                 "custom_voice_dir": custom_voice_dir,
                 "voice_dir": custom_voice_dir
-                if (custom_voice_dir / (speaker_id + ".npz")).exists()
+                if (custom_voice_dir / Path(speaker_id + ".npz")).exists()
                 else voice_dir,
             },
         }
         self.op_dir = Path(op_dir)
         self.load_model()
+        self.listener = Listener()
+        self.rouge = rouge_scorer.RougeScorer(['rougeL'], use_stemmer=True)
 
     def load_model(self):
         """
@@ -123,13 +128,13 @@ class Speaker:
 
         return result
 
-    def say(self, input:str, output_fn="output", temp=0.8, wave_temp=0.8):
+    def say(self, input:str, fnOutput="output", temp=0.8, wave_temp=0.8):
         """
         Converts the input text into speech.
 
         Args:
             input (str): The text to convert into speech.
-            output_fn (str): The filename for the output audio file.
+            fnOutput (str): The filename for the output audio file.
             temp (float): The temperature for the text generation.
                 Only used for the "bark" backend.
             wave_temp (float): The temperature for the waveform generation.
@@ -158,17 +163,41 @@ class Speaker:
             silence = np.zeros(int(0.25 * SAMPLE_RATE))
             pieces = []
             speaker = str(params["voice_dir"] / params["speaker"])
-            for _, sent in enumerate(sentences):
+            for i, sent in enumerate(sentences):
+                piece_fn = fnOutput + f"_p{i}"
+                # Generate tensor for sentence
                 audio_array = generate_audio(sent,
                                              history_prompt=speaker,
                                              text_temp=temp,
                                              waveform_temp=wave_temp)
-                pieces += [audio_array, silence.copy()]
-            outputs = np.concatenate(pieces)
-            print(f"[BARK] wav: {outputs}")
 
-        self.save_audio(outputs, output_fn, True)
-            
+                # # Save sentence clip
+                _ = self.save_audio(audio_array, piece_fn, True)
+
+                # Transcribe w/ whisper
+                promptTranscript = self.listener.transcribe(str(self.op_dir / Path(piece_fn + ".wav")))
+                # Score recall using RougeL scorer
+                score = self.rouge.score(sent, promptTranscript['text'])['rougeL'][2]
+                print(f"""---
+Part {i}:
+  Original:   {sent.strip()}
+  Transcript: {promptTranscript['text'].strip()}
+  F1:         {score}""")
+                # If recall < .95, regen audio
+                if score < .95:
+                    audio_array = generate_audio(sent,
+                                             history_prompt=speaker,
+                                             text_temp=temp,
+                                             waveform_temp=wave_temp)
+                # append to pieces w/ silence
+                os.remove(self.op_dir / Path(piece_fn +'.wav'))
+                pieces += [audio_array, silence.copy()]
+            # Merge pieces to single chunk
+            outputs = np.concatenate(pieces)
+
+            print(f"[BARK] wav: {outputs}")
+        # Save chunk as wav
+        _ = self.save_audio(outputs, fnOutput, True)
         return outputs
     
     def save_audio(
@@ -194,16 +223,9 @@ class Speaker:
             return
 
         print(f'Saving {filename} to {self.op_dir}')
-        audio_output = audio_output.astype(np.int16)
-        with wave.open(path + '.wav', 'w') as f:
-            # Set number of channels - mono
-            f.setnchannels(1)
-            # Set sample width to 2 bytes (for 16-bit audio/int16 format)
-            f.setsampwidth(2)
-            # Set sample rate
-            f.setframerate(self.params[self.backend]["sample_rate"])
-            # Write to file
-            f.writeframes(audio_output.tobytes())
+        op = Audio(audio_output, rate=self.params[self.backend]["sample_rate"])
+        with open(path+'.wav', 'wb') as f:
+            f.write(op.data)
 
 if __name__ == "__main__":
     voice = Speaker()
