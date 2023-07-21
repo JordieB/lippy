@@ -158,8 +158,7 @@ class Speaker:
             silence = np.zeros(int(0.25 * SAMPLE_RATE))
             pieces = []
             speaker = str(params["voice_dir"] / params["speaker"])
-            print(speaker)
-            for i, sent in enumerate(sentences):
+            for _, sent in enumerate(sentences):
                 audio_array = generate_audio(sent,
                                              history_prompt=speaker,
                                              text_temp=temp,
