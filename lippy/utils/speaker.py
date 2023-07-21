@@ -14,7 +14,7 @@ class Speaker:
         backend="bark",
         speaker_id="Dalinar-1_t8_w8_7",
         op_dir=str(PROJ_DIR / "data/audio"),
-        custom_voice_dir=str(PROJ_DIR / "voices"),
+        custom_voice_dir=str(PROJ_DIR / "data/voices"),
         # TODO: fix this so it's either (a) OS-independent and/or (b) only uses
         #   PROJ_DIR
         # TODO: make PEP8 compliant ... somehow
