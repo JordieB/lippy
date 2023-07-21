@@ -1,58 +1,88 @@
 import os
 import torch
-from IPython.display import Audio
+import wave
 from nltk import sent_tokenize, download
 import numpy as np
 from bark import generate_audio, SAMPLE_RATE, preload_models
-from os import listdir
+from pathlib import Path
 
+from pathlib import Path
+PROJ_DIR = Path(__file__).resolve().parents[3]
 
 class Speaker:
-    def __init__(self, backend="bark", speaker_id = "Dalinar-1_t8_w8_7", op_dir: str = "/home/ubuntu/Tehas/lippy/data/audio"):
+    def __init__(
+        self,
+        backend="bark",
+        speaker_id="Dalinar-1_t8_w8_7",
+        op_dir=str(PROJ_DIR / "data/audio"),
+        custom_voice_dir=str(PROJ_DIR / "voices"),
+        # TODO: fix this so it's either (a) OS-independent and/or (b) only uses
+        #   PROJ_DIR
+        # TODO: make PEP8 compliant ... somehow
+        voice_dir=str(Path.home() / ".local/lib/python3.8/site-packages/bark/assets/prompts/v2/")
+    ):
         """
         Initializes the Speaker class.
 
-        Parameters:
-        base_dir (str, optional): The base directory where the audio files will
-                                  be saved.
-                                  Defaults to "audio_files".
+        Args:
+            backend (str): The backend to use for text-to-speech. Defaults to
+                "bark".
+            speaker_id (str): The ID of the speaker voice to use. Defaults to
+                "Dalinar-1_t8_w8_7".
+            op_dir (Path): The directory where the audio files will be saved.
+            custom_voice_dir (Path): The directory containing custom voice
+                files.
+            voice_dir (Path): The directory containing the default voice files.
         """
-        self.backend= backend
+        self.backend = backend
         self.params = {
-            "silero":{
-                "lang": 'en',
+            "silero": {
+                "lang": "en",
                 "model_id": "v3_en",
                 "sample_rate": 48000,
                 "speaker": speaker_id,
-                "device": torch.device('cpu')
-            }, "bark": {
+                "device": torch.device("cpu"),
+            },
+            "bark": {
                 "speaker": speaker_id + ".npz",
                 "sample_rate": SAMPLE_RATE,
-                "custom_voice_dir": "/home/ubuntu/Tehas/lippy/voices/",
-                "voice_dir": "/home/ubuntu/Tehas/lippy/voices/" if speaker_id + ".npz" in listdir("/home/ubuntu/Tehas/lippy/voices/") else "/home/ubuntu/.local/lib/python3.8/site-packages/bark/assets/prompts/v2/"
-            }
+                "custom_voice_dir": custom_voice_dir,
+                "voice_dir": custom_voice_dir
+                if (custom_voice_dir / (speaker_id + ".npz")).exists()
+                else voice_dir,
+            },
         }
-        self.op_dir = op_dir
+        self.op_dir = Path(op_dir)
         self.load_model()
 
     def load_model(self):
         """
-        Loads the pre-trained TTS model.
+        Loads the pre-trained TTS model based on the backend specified during
+        initialization.
         """
         params = self.params[self.backend]
         if self.backend == "silero":
             self.model, _ = torch.hub.load(
-                repo_or_dir='snakers4/silero-models',
-                model='silero_tts',
+                repo_or_dir="snakers4/silero-models",
+                model="silero_tts",
                 language=params["lang"],
-                speaker=params["speaker"]
+                speaker=params["speaker"],
             )
             self.model.to(self.device)
         elif self.backend == "bark":
-            download('punkt')
+            download("punkt")
             preload_models()
         
     def split_into_sentences(self, input_string):
+        """
+        Splits the input string into individual sentences.
+
+        Args:
+            input_string (str): The string to split into sentences.
+
+        Returns:
+            list: A list of sentences.
+        """
         # Split the input string into individual sentences
         sentences = input_string.split('. ')
 
@@ -95,6 +125,20 @@ class Speaker:
         return result
 
     def say(self, input:str, output_fn="output", temp=0.8, wave_temp=0.8):
+        """
+        Converts the input text into speech.
+
+        Args:
+            input (str): The text to convert into speech.
+            output_fn (str): The filename for the output audio file.
+            temp (float): The temperature for the text generation.
+                Only used for the "bark" backend.
+            wave_temp (float): The temperature for the waveform generation.
+                Only used for the "bark" backend.
+
+        Returns:
+            torch.Tensor: The audio output.
+        """
         params = self.params[self.backend]
         if self.backend == "silero":
             strings = self.split_into_sentences(input)
@@ -114,10 +158,13 @@ class Speaker:
             print(f"[BARK] num tokens: {len(sentences)}")
             silence = np.zeros(int(0.25 * SAMPLE_RATE))
             pieces = []
-            speaker = params["voice_dir"] + params["speaker"]
-            # print(speaker)
+            speaker = str(params["voice_dir"] / params["speaker"])
+            print(speaker)
             for i, sent in enumerate(sentences):
-                audio_array = generate_audio(sent, history_prompt=speaker, text_temp=temp, waveform_temp=wave_temp)
+                audio_array = generate_audio(sent,
+                                             history_prompt=speaker,
+                                             text_temp=temp,
+                                             waveform_temp=wave_temp)
                 pieces += [audio_array, silence.copy()]
             outputs = np.concatenate(pieces)
             print(f"[BARK] wav: {outputs}")
@@ -135,12 +182,12 @@ class Speaker:
         """
         Saves the audio as a WAV file.
 
-        Parameters:
-        audio_output (torch.Tensor): The audio to be saved.
-        filename (str): The filename for the saved audio.
-        overwrite (bool, optional): Whether to overwrite an existing file
-                                    with the same name.
-                                    Defaults to False.
+        Args:
+            audio_output (torch.Tensor): The audio to be saved.
+            filename (str): The filename for the saved audio.
+            overwrite (bool, optional): Whether to overwrite an existing file
+                                        with the same name.
+                                        Defaults to False.
         """
         path = os.path.join(self.op_dir, filename)
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -149,12 +196,26 @@ class Speaker:
             return
 
         print(f'Saving {filename} to {self.op_dir}')
-        op = Audio(audio_output, rate=self.params[self.backend]["sample_rate"])
-        print(op)
-        with open(path+'.wav', 'wb') as f:
-            f.write(op.data)
+        audio_output = audio_output.astype(np.int16)
+        with wave.open(path + '.wav', 'w') as f:
+            # Set number of channels - mono
+            f.setnchannels(1)
+            # Set sample width to 2 bytes (for 16-bit audio/int16 format)
+            f.setsampwidth(2)
+            # Set sample rate
+            f.setframerate(self.params[self.backend]["sample_rate"])
+            # Write to file
+            f.writeframes(audio_output.tobytes())
 
 if __name__ == "__main__":
     voice = Speaker()
-    text = "1. Gas chromatography is a separation technique that separates compounds in a gaseous mixture based on their physical properties. It is used in the field of chemical analysis to separate and identify various elements present in a sample. The process involves passing a gas through a small column containing a stationary phase. The stationary phase is usually packed into the column to separate the molecules. The molecules then interact with each other and the stationary phase, which leads to a separation and identification of individual components in the mixture."
+    text = ("1. Gas chromatography is a separation technique that separates "
+            "compounds in a gaseous mixture based on their physical properties."
+            " It is used in the field of chemical analysis to separate and "
+            "identify various elements present in a sample. The process "
+            "involves passing a gas through a small column containing a "
+            "stationary phase. The stationary phase is usually packed into the "
+            "column to separate the molecules. The molecules then interact with"
+            " each other and the stationary phase, which leads to a separation "
+            "and identification of individual components in the mixture.")
     voice.say(text)
