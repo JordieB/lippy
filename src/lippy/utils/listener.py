@@ -1,3 +1,4 @@
+from pathlib import Path
 import whisper
 
 class Listener:
@@ -10,7 +11,8 @@ class Listener:
 
 
 if __name__ == "__main__":
-    wav_fp = "/home/ubuntu/Tehas/lippy/example/Bark/wit_mem_passion.wav"
+    PROJ_DIR = Path(__file__).resolve().parents[3]
+    wav_fp = str(PROJ_DIR / "examples/Bark/wit_mem_passion.wav")
 
     listener = Listener()
     print(listener.transcribe(wav_fp)['text'])
