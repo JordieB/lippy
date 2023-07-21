@@ -33,7 +33,7 @@ class Listener:
 
 if __name__ == "__main__":
     # Define the project directory
-    PROJ_DIR = Path(__file__).resolve().parents[3]
+    PROJ_DIR = Path(__file__).resolve().parents[2]
 
     # Define the path to the audio file
     wav_fp = str(PROJ_DIR / "examples/Bark/wit_mem_passion.wav")

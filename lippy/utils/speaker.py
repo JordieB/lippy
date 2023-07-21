@@ -6,7 +6,7 @@ import numpy as np
 from bark import generate_audio, SAMPLE_RATE, preload_models
 from pathlib import Path
 
-PROJ_DIR = Path(__file__).resolve().parents[3]
+PROJ_DIR = Path(__file__).resolve().parents[2]
 
 class Speaker:
     def __init__(

@@ -11,7 +11,7 @@ from lippy.utils.vector_store import db
 from lippy.utils.speaker import Speaker
 
 # Define the project directory
-PROJ_DIR = Path(__file__).resolve().parents[3]
+PROJ_DIR = Path(__file__).resolve().parents[2]
 
 class FalconLLM(LLM):
     """
