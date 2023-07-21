@@ -15,7 +15,19 @@ This project uses the `gcalwrapper` module to interact with the Google Calendar 
 
 ## Installation
 
-Under Construction
+More user-friendly, requires Python and Git w/ ffmpeg (preferrably) already installed:
+```shell
+curl https://raw.githubusercontent.com/JordieB/lippy/main/project_setup.py | python3
+```
+
+Less user-friendly for Unix/MacOS (w/o using virtual enviornments):
+```shell
+git clone https://github.com/JordieB/lippy.git
+cd lippy
+pip install -e .
+pip install -r requrirements.txt
+bash ./install_dependencies.sh
+```
 
 ## Usage
 
