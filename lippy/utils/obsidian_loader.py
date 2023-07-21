@@ -210,5 +210,9 @@ class ObsidianLoader(BaseLoader):
 
 
 if __name__ == "__main__":
-    loader = ObsidianLoader("/home/theatasigma/lippy/data/vault/2 - Notes")
+    # Define the project directory
+    PROJ_DIR = Path(__file__).resolve().parents[2]
+    # Init the Obsidian markdown/doc loader
+    loader = ObsidianLoader(str(PROJ_DIR / "data/vault/2 - Notes"))
+    # Kick off the loading process
     docs = loader.load()
