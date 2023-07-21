@@ -1,3 +1,11 @@
+# Ignore everything in the data directory
+/data/*
+
+# But don't ignore the data directory itself
+!/data/
+!/data/voices/Dalinar-1_t8_w8_7.npz
+!/data/audio/usage_example_bark.wav
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -130,6 +138,3 @@ dmypy.json
 
 # pylint
 pylint.log
-
-# personal data
-data/
