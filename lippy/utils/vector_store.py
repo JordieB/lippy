@@ -11,7 +11,8 @@ class Database:
 
     Attributes:
         pathDB (str): Path to the database.
-        embeddings (HuggingFaceInstructEmbeddings): Embeddings to use for the documents.
+        embeddings (HuggingFaceInstructEmbeddings): Embeddings to use for the
+            documents.
         vectordb (Chroma): Vector database for the documents.
     """
 
@@ -20,7 +21,8 @@ class Database:
         Initializes the Database object.
 
         Args:
-            chunk_size (int, optional): Chunk size for the documents. Defaults to 500.
+            chunk_size (int, optional): Chunk size for the documents. Defaults
+                to 500.
         """
         self.pathDB = str(PROJ_DIR / "data/db")
         self.embeddings = HuggingFaceInstructEmbeddings()
@@ -31,12 +33,15 @@ class Database:
         Ingests the documents from the specified path into the vector database.
 
         Args:
-            path (str, optional): Path to the documents. Defaults to 'data/vault/2 - Notes'.
+            path (str, optional): Path to the documents. Defaults to
+                'data/vault/2 - Notes'.
         """
         self.loader = ObsidianLoader(path)
         docs = self.loader.load()
         self.vectordb = Chroma.from_documents(
-            documents=docs, embedding=self.embeddings, persist_directory=self.pathDB
+            documents=docs,
+            embedding=self.embeddings,
+            persist_directory=self.pathDB
         )
 
     def retriever(self):
@@ -44,7 +49,8 @@ class Database:
         Returns a retriever for the vector database.
 
         Returns:
-            Retriever: The retriever for the vector database, or None if the database is not initialized.
+            Retriever: The retriever for the vector database, or None if the
+                database is not initialized.
         """
         self.injest()
         return (
