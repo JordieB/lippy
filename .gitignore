@@ -1,11 +1,17 @@
 # Ignore everything in the data directory
-/data/*
+data/*
+data/voices/*
+data/audio/*
+data/db/*
 
 # Don't ignore these specific files and directories
-!/data/
-!/tests/
-!/data/voices/Dalinar-1_t8_w8_7.npz
-!/data/audio/usage_example_bark.wav
+!data/
+!data/voices
+!data/voices/Dalinar-1_t8_w8_7.npz
+!data/audio
+!data/audio/usage_example_bark.wav
+!data/db
+!tests/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
