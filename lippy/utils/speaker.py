@@ -162,6 +162,7 @@ class Speaker:
             print(f"[BARK] num tokens: {len(sentences)}")
             silence = np.zeros(int(0.25 * SAMPLE_RATE))
             pieces = []
+            pathPieces = []
             speaker = str(params["voice_dir"] / params["speaker"])
             for i, sent in enumerate(sentences):
                 piece_fn = fnOutput + f"_p{i}"
@@ -183,18 +184,21 @@ Part {i}:
   Original:   {sent.strip()}
   Transcript: {promptTranscript['text'].strip()}
   F1:         {score}""")
-                # If recall < .95, regen audio
-                if score < .95:
+                # If recall < acceptable value, regen audio
+                if score < .9:
                     audio_array = generate_audio(sent,
                                              history_prompt=speaker,
                                              text_temp=temp,
                                              waveform_temp=wave_temp)
+                    _ = self.save_audio(audio_array, piece_fn, True)
                 # append to pieces w/ silence
-                os.remove(self.op_dir / Path(piece_fn +'.wav'))
+                # os.remove(self.op_dir / Path(piece_fn +'.wav'))
                 pieces += [audio_array, silence.copy()]
+                pathPieces.append(self.op_dir / Path(piece_fn +'.wav'))
             # Merge pieces to single chunk
             outputs = np.concatenate(pieces)
-
+            for path in pathPieces:
+                os.remove(path)
             print(f"[BARK] wav: {outputs}")
         # Save chunk as wav
         _ = self.save_audio(outputs, fnOutput, True)
