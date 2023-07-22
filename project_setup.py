@@ -30,6 +30,8 @@ def run_command(cmd):
 
 # Clone the git repo
 run_command(["git", "clone", "https://github.com/JordieB/lippy.git"])
+# Move to the cloned repo
+run_command(["cd", "lippy"])
 
 # Create a virtual environment
 venv_dir = "env"

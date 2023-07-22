@@ -1,6 +1,5 @@
 import os
 import torch
-import wave
 from nltk import sent_tokenize, download
 import numpy as np
 from bark import generate_audio, SAMPLE_RATE, preload_models
