@@ -1,8 +1,8 @@
 import os
 import torch
-from nltk import sent_tokenize, download
+from nltk import sent_tokenize, download, Text
 import numpy as np
-from bark import generate_audio, SAMPLE_RATE, preload_models
+from bark import generate_audio, SAMPLE_RATE, preload_models, save_as_prompt
 from pathlib import Path
 from lippy.utils.listener import Listener
 from rouge_score import rouge_scorer
@@ -16,7 +16,7 @@ class Speaker:
         backend="bark",
         speaker_id="Dalinar-1_t8_w8_7",
         op_dir=PROJ_DIR / "data/audio",
-        custom_voice_dir=PROJ_DIR / "voices",
+        custom_voice_dir=PROJ_DIR / "data/voices",
         # TODO: fix this so it's either (a) OS-independent and/or (b) only uses
         #   PROJ_DIR
         # TODO: make PEP8 compliant ... somehow
@@ -126,6 +126,20 @@ class Speaker:
             result.append(current_sentence)
 
         return result
+    
+    def split_runon(self, sentence):
+        split_sentence = sentence.strip().split()
+        line = ''
+        split_len = 225
+        wrapped_sentence = []
+        for word in split_sentence:
+            if len(line+word)<split_len:
+                line += word + ' '
+            else:
+                wrapped_sentence.append(line)
+                line = word + ' '
+        wrapped_sentence.append(line)
+        return wrapped_sentence
 
     def say(self, input:str, fnOutput="output", temp=0.8, wave_temp=0.8):
         """
@@ -164,36 +178,55 @@ class Speaker:
             pathPieces = []
             speaker = str(params["voice_dir"] / params["speaker"])
             for i, sent in enumerate(sentences):
-                piece_fn = fnOutput + f"_p{i}"
-                # Generate tensor for sentence
-                audio_array = generate_audio(sent,
-                                             history_prompt=speaker,
-                                             text_temp=temp,
-                                             waveform_temp=wave_temp)
+                tries = 0
+                if len(Text(sent)) >= 225:
+                    sent = self.split_runon(sent)
+                else: sent = [sent]
+                for k, sents in enumerate(sent):
+                    piece_fn = fnOutput + f"_p{i}_{k}"
+                    # Generate tensor for sentence
+                    full_gen, audio_array = generate_audio(sents,
+                                                history_prompt=speaker,
+                                                text_temp=temp,
+                                                waveform_temp=wave_temp,
+                                                output_full=True)
 
-                # # Save sentence clip
-                _ = self.save_audio(audio_array, piece_fn, True)
-
-                # Transcribe w/ whisper
-                promptTranscript = self.listener.transcribe(str(self.op_dir / Path(piece_fn + ".wav")))
-                # Score recall using RougeL scorer
-                score = self.rouge.score(sent, promptTranscript['text'])['rougeL'][2]
-                print(f"""---
-Part {i}:
-  Original:   {sent.strip()}
-  Transcript: {promptTranscript['text'].strip()}
-  F1:         {score}""")
-                # If recall < acceptable value, regen audio
-                if score < .9:
-                    audio_array = generate_audio(sent,
-                                             history_prompt=speaker,
-                                             text_temp=temp,
-                                             waveform_temp=wave_temp)
+                    # # Save sentence clip
                     _ = self.save_audio(audio_array, piece_fn, True)
-                # append to pieces w/ silence
-                # os.remove(self.op_dir / Path(piece_fn +'.wav'))
-                pieces += [audio_array, silence.copy()]
-                pathPieces.append(self.op_dir / Path(piece_fn +'.wav'))
+                    # Transcribe w/ whisper
+                    promptTranscript = self.listener.transcribe(str(self.op_dir / Path(piece_fn + ".wav")))
+                    # Score recall using RougeL scorer
+                    score = self.rouge.score(sents, promptTranscript['text'])['rougeL'][2]
+                    print(f"""---
+Part {i}, try {tries}:
+Original:   {sents.strip()}
+Transcript: {promptTranscript['text'].strip()}
+F1:         {score}""")
+                    # If recall < acceptable value, regen audio
+                    while score < .9 and tries <= 3:
+                        full_gen, audio_array = generate_audio(sents,
+                                                history_prompt=speaker,
+                                                text_temp=temp,
+                                                waveform_temp=wave_temp,
+                                                output_full=True)
+                        _ = self.save_audio(audio_array, piece_fn, True)
+                        tries += 1
+                        promptTranscript = self.listener.transcribe(str(self.op_dir / Path(piece_fn + ".wav")))
+                        # Score recall using RougeL scorer
+                        score = self.rouge.score(sents, promptTranscript['text'])['rougeL'][2]
+                        print(f"""---
+Part {i}, try {tries}:
+Original:   {sents.strip()}
+Transcript: {promptTranscript['text'].strip()}
+F1:         {score}""")
+                    # save_as_prompt(speaker, full_gen)
+                    # append to pieces w/ silence
+                    # os.remove(self.op_dir / Path(piece_fn +'.wav'))
+                    speaker = str(params["voice_dir"] / (str(params["speaker"]) + f'_{i}_{k}.npz'))
+                    pathPieces.append(speaker)
+                    save_as_prompt(speaker, full_gen)
+                    pieces += [audio_array, silence.copy()]
+                    pathPieces.append(self.op_dir / Path(piece_fn +'.wav'))
             # Merge pieces to single chunk
             outputs = np.concatenate(pieces)
             for path in pathPieces:
@@ -232,13 +265,5 @@ Part {i}:
 
 if __name__ == "__main__":
     voice = Speaker()
-    text = ("1. Gas chromatography is a separation technique that separates "
-            "compounds in a gaseous mixture based on their physical properties."
-            " It is used in the field of chemical analysis to separate and "
-            "identify various elements present in a sample. The process "
-            "involves passing a gas through a small column containing a "
-            "stationary phase. The stationary phase is usually packed into the "
-            "column to separate the molecules. The molecules then interact with"
-            " each other and the stationary phase, which leads to a separation "
-            "and identification of individual components in the mixture.")
+    text = " And so I stand among you as one that offers a small message of hope, that first, there are always people who dare to seek on the margin of society, who are not dependent on social acceptance, not dependent on social routine, and prefer a kind of free-floating existence."
     voice.say(text)
