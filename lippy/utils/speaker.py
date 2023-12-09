@@ -1,13 +1,16 @@
 import os
+from pathlib import Path
+
+from soundfile import write as sfwrite
+from rouge_score import rouge_scorer
 import torch
 from nltk import sent_tokenize, download, Text
 import numpy as np
 from bark import generate_audio, SAMPLE_RATE, preload_models, save_as_prompt
-from pathlib import Path
-from lippy.utils.listener import Listener
-from rouge_score import rouge_scorer
-from IPython.display import Audio
 
+from lippy.utils.listener import Listener
+
+# Define project directory
 PROJ_DIR = Path(__file__).resolve().parents[2]
 
 class Speaker:
@@ -20,7 +23,8 @@ class Speaker:
         # TODO: fix this so it's either (a) OS-independent and/or (b) only uses
         #   PROJ_DIR
         # TODO: make PEP8 compliant ... somehow
-        voice_dir=Path.home() / Path(".local/lib/python3.8/site-packages/bark/assets/prompts/v2/")
+        voice_dir=Path.home() / Path((".local/lib/python3.8/site-packages/bark"
+                                      "/assets/prompts/v2/"))
     ):
         """
         Initializes the Speaker class.
@@ -194,14 +198,17 @@ class Speaker:
                     # # Save sentence clip
                     _ = self.save_audio(audio_array, piece_fn, True)
                     # Transcribe w/ whisper
-                    promptTranscript = self.listener.transcribe(str(self.op_dir / Path(piece_fn + ".wav")))
+                    _path = str(self.op_dir / Path(piece_fn + ".wav"))
+                    promptTranscript = self.listener.transcribe(_path)
                     # Score recall using RougeL scorer
-                    score = self.rouge.score(sents, promptTranscript['text'])['rougeL'][2]
-                    print(f"""---
-Part {i}, try {tries}:
-Original:   {sents.strip()}
-Transcript: {promptTranscript['text'].strip()}
-F1:         {score}""")
+                    score = self.rouge.score(
+                        sents,
+                        promptTranscript['text'])['rougeL'][2]
+                    print(f"---\n"
+                          f"Part {i}, try {tries}:\n"
+                          f"Original:   {sents.strip()}\n"
+                          f"Transcript: {promptTranscript['text'].strip()}\n"
+                          f"F1:         {score}")
                     # If recall < acceptable value, regen audio
                     while score < .9 and tries <= 3:
                         full_gen, audio_array = generate_audio(sents,
@@ -211,19 +218,21 @@ F1:         {score}""")
                                                 output_full=True)
                         _ = self.save_audio(audio_array, piece_fn, True)
                         tries += 1
-                        promptTranscript = self.listener.transcribe(str(self.op_dir / Path(piece_fn + ".wav")))
+                        _path = str(self.op_dir / Path(piece_fn + ".wav"))
+                        promptTranscript = self.listener.transcribe(_path)
                         # Score recall using RougeL scorer
-                        score = self.rouge.score(sents, promptTranscript['text'])['rougeL'][2]
-                        print(f"""---
-Part {i}, try {tries}:
-Original:   {sents.strip()}
-Transcript: {promptTranscript['text'].strip()}
-F1:         {score}""")
-                    # save_as_prompt(speaker, full_gen)
+                        score = self.rouge.score(sents,
+                                                 promptTranscript['text'])
+                        score = score['rougeL'][2]
+                        print(f"---\n"
+                              f"Part {i}, try {tries}:\n"
+                              f"Original:   {sents.strip()}\n"
+                              f"Transcript: {promptTranscript['text'].strip()}"
+                              f"\nF1:         {score}")
                     # append to pieces w/ silence
-                    # os.remove(self.op_dir / Path(piece_fn +'.wav'))
-                    speaker = str(params["voice_dir"] / (str(params["speaker"]) + f'_{i}_{k}.npz'))
-                    pathPieces.append(speaker)
+                    speaker_path = {params['voice_dir'] / params['speaker']}
+                    speaker_path += f'_{i}_{k}.npz'
+                    pathPieces.append(speaker_path)
                     save_as_prompt(speaker, full_gen)
                     pieces += [audio_array, silence.copy()]
                     pathPieces.append(self.op_dir / Path(piece_fn +'.wav'))
@@ -236,17 +245,12 @@ F1:         {score}""")
         _ = self.save_audio(outputs, fnOutput, True)
         return outputs
     
-    def save_audio(
-        self,
-        audio_output: torch.Tensor,
-        filename: str,
-        overwrite: bool = False
-    ):
+    def save_audio(self, audio_output, filename, overwrite=False):
         """
         Saves the audio as a WAV file.
 
         Args:
-            audio_output (torch.Tensor): The audio to be saved.
+            audio_output (numpy.ndarray): The audio to be saved as a numpy array.
             filename (str): The filename for the saved audio.
             overwrite (bool, optional): Whether to overwrite an existing file
                                         with the same name.
@@ -259,11 +263,15 @@ F1:         {score}""")
             return
 
         print(f'Saving {filename} to {self.op_dir}')
-        op = Audio(audio_output, rate=self.params[self.backend]["sample_rate"])
-        with open(path+'.wav', 'wb') as f:
-            f.write(op.data)
+        sf.write(path + '.wav', audio_output,
+                 self.params[self.backend]["sample_rate"])
 
+# Main module check
 if __name__ == "__main__":
     voice = Speaker()
-    text = " And so I stand among you as one that offers a small message of hope, that first, there are always people who dare to seek on the margin of society, who are not dependent on social acceptance, not dependent on social routine, and prefer a kind of free-floating existence."
+    text = ("And so I stand among you as one that offers a small message of "
+            "hope, that first, there are always people who dare to seek on the"
+            " margin of society, who are not dependent on social acceptance, "
+            "not dependent on social routine, and prefer a kind of "
+            "free-floating existence.")
     voice.say(text)
