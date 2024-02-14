@@ -75,7 +75,7 @@ class AudioSplitter:
         audio_file_size_mb = os.path.getsize(self.input_file_path)
         audio_file_size_mb = audio_file_size_mb / 1024**2
         estimated_duration_ms = self.estimate_duration_for_size(
-            audio_length_ms, estimated_duration_ms
+            audio_length_ms, audio_file_size_mb
         )
 
         # Establish some tracking data to help managing looping operations
