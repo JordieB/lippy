@@ -7,7 +7,7 @@ data/tmp/*
 data/voices/*
 # Don't ignore these specific files, directories
 !data/audio/usage_example_bark.wav
-!data/audio/usage_Example_bark.mp3
+!data/audio/usage_example_bark.mp3
 !data/voices/Dalinar-1_t8_w8_7.npz
 
 # Byte-compiled / optimized / DLL files
