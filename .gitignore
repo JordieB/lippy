@@ -1,15 +1,14 @@
 # Project-specific
-# # Ignore everything in the data sub-directories (keep the structure)
-data/voices/*
+# Ignore everything in the data sub-directories (keep the structure)
 data/audio/*
 data/db/*
 data/text/*
 data/tmp/*
-# # Don't ignore these specific files and directories
-!data/voices/Dalinar-1_t8_w8_7.npz
+data/voices/*
+# Don't ignore these specific files, directories
 !data/audio/usage_example_bark.wav
 !data/audio/usage_Example_bark.mp3
-!tests/
+!data/voices/Dalinar-1_t8_w8_7.npz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
