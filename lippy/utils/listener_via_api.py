@@ -261,22 +261,24 @@ class Listener:
 if __name__ == '__main__':
     from dotenv import load_dotenv
     from pathlib import Path
+
+    from lippy.utils.misc import find_project_root
     
     # Set the filename for the input audio file to split and transcribe
-    AUDIO_FN = 'audio.mp3'
+    audio_fn = 'audio.mp3'
 
     # Load the .env file (where your OpenAI API is stored in `OPENAI_API_KEY`)
     _ = load_dotenv()
 
     # Set file paths
-    cwd = Path.cwd()
-    data_dir = cwd/'data'
-    speech_dir = data_dir/'speech'
+    project_root_fp = find_project_root()
+    data_dir = project_root_fp/'data'
+    audio_dir = data_dir/'audio'
     text_dir = data_dir/'text'
-    speech_fp = speech_dir/AUDIO_FN
-    output_fn = ''.join(AUDIO_FN.lower().replace(' ', '_').split('.')[:-1])
+    INPUT_AUDIO_FP = audio_dir/audio_fn
+    output_fn = ''.join(audio_fn.lower().replace(' ', '_').split('.')[:-1])
     output_fn += '.txt'
-    OUTPUT_FILE_PATH = text_dir/output_fn
+    OUTPUT_TEXT_FP = text_dir/output_fn
     # Set how big the audio file segmenets will become
     target_size_mb = 25
 
@@ -284,9 +286,11 @@ if __name__ == '__main__':
     target_size_mb = 25
     
     # Init mp3/speech splitter
-    splitter = AudioSplitter(input_file_path=speech_fp,
+    splitter = AudioSplitter(input_file_path=INPUT_AUDIO_FP,
                             target_size_mb=target_size_mb,
-                            output_file_path=speech_fp)
+                            # Will add numbers to base file name to denote 
+                            # segments of the original mp3
+                            output_file_path=INPUT_AUDIO_FP)
     # Split the MP3 by size and save the segments
     output_file_paths = splitter.save_segments_to_directory()
 
@@ -302,4 +306,4 @@ if __name__ == '__main__':
     # Init transcriber
     listener = Listener(SYSTEM_PROMPT)
     # Run transcriber w/ corrector
-    listener.process_audio_files(AUDIO_FILE_PATHS, OUTPUT_FILE_PATH)
+    listener.process_audio_files(AUDIO_FILE_PATHS, OUTPUT_TEXT_FP)
