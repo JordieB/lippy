@@ -88,21 +88,21 @@ class AudioSplitter:
             end_time = start_time + estimated_duration_ms
             segment = audio[start_time:end_time]
 
-            temp_file = "temp_segment.mp3"
-            segment.export(temp_file, format="mp3")
+            tmp_fp = 'tmp/interim_segment.mp3'
+            segment.export(tmp_fp, format="mp3")
 
-            while ((os.path.getsize(temp_file)
+            while ((os.path.getsize(tmp_fp)
                         > (self.target_size_mb * 1024 * 1024))
                    and (estimated_duration_ms > 0)):
                 estimated_duration_ms -= 1000
                 segment = audio[start_time:start_time + estimated_duration_ms]
-                segment.export(temp_file, format="mp3")
+                segment.export(tmp_fp, format="mp3")
 
             segments.append(segment)
 
             start_time += estimated_duration_ms
 
-        os.remove(temp_file)
+        os.remove(tmp_fp)
 
         return segments
 

@@ -4,6 +4,7 @@ data/voices/*
 data/audio/*
 data/db/*
 data/text/*
+data/tmp/*
 # # Don't ignore these specific files and directories
 !data/voices/Dalinar-1_t8_w8_7.npz
 !data/audio/usage_example_bark.wav
