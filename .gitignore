@@ -1,16 +1,13 @@
-# Ignore everything in the data directory
-data/*
+# Project-specific
+# # Ignore everything in the data sub-directories (keep the structure)
 data/voices/*
 data/audio/*
 data/db/*
-
-# Don't ignore these specific files and directories
-!data/
-!data/voices
+data/text/*
+# # Don't ignore these specific files and directories
 !data/voices/Dalinar-1_t8_w8_7.npz
-!data/audio
 !data/audio/usage_example_bark.wav
-!data/db
+!data/audio/usage_Example_bark.mp3
 !tests/
 
 # Byte-compiled / optimized / DLL files
