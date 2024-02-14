@@ -1,8 +1,10 @@
 import os
+import re
 from typing import List
 
-from openai import ChatCompletion, Audio
 from pydub import AudioSegment
+from openai import OpenAI
+
 
 class AudioSplitter:
     """
@@ -88,7 +90,7 @@ class AudioSplitter:
             end_time = start_time + estimated_duration_ms
             segment = audio[start_time:end_time]
 
-            tmp_fp = 'tmp/interim_segment.mp3'
+            tmp_fp = 'data/tmp/interim_segment.mp3'
             segment.export(tmp_fp, format="mp3")
 
             while ((os.path.getsize(tmp_fp)
@@ -156,12 +158,15 @@ class Listener:
 
     def __init__(self, system_prompt: str):
         """
-        Initializes the TranscriptCorrector with a system prompt.
+        Initializes the Listener with a system prompt and a client to interact
+        with OpenAI models.
 
         Args:
             system_prompt (str): System prompt for the GPT-4 model.
         """
         self.system_prompt = system_prompt
+        self.openai_client = OpenAI()
+
 
     def transcribe_audio(self, audio_file_path: str) -> str:
         """
@@ -179,8 +184,15 @@ class Listener:
             listener = Listener(SYSTEM_PROMPT)
             transcription = listener.transcribe_audio(AUDIO_FILE_PATH)
         """
+        # Open audio file
         with open(audio_file_path, 'rb') as audio_file:
-            return Audio.transcribe(model='whisper-1', file=audio_file)['text']
+            # Send it to be transcribed
+            response = self.openai_client.audio.transcriptions.create(
+                model='whisper-1', file=audio_file)
+            # Pull text data out of API response
+            transcription = response.text
+
+            return transcription
 
     def generate_corrected_transcript(self, transcription: str) -> str:
         """
@@ -189,8 +201,6 @@ class Listener:
         Args:
             transcription (str): transcription to improve, provided via
                 self.transcribe_audio()
-            temperature (float, optional): Sampling temperature for GPT-4. 
-                Defaults to 0.0.
 
         Returns:
             str: LLM-assisted clean and corrected transcription
@@ -203,7 +213,8 @@ class Listener:
             improved_transcription = listener \
                 .generate_corrected_transcript(transcription)
         """
-        response = ChatCompletion.create(
+        # Send transcript to LLM to revise
+        response = self.openai_client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {
@@ -216,8 +227,10 @@ class Listener:
                 }
             ]
         )
-        response_str = response['choices'][0]['message']['content']
-        return response_str
+        # Pull out updated transcript
+        updated_transcription = response.choices[0].message.content
+
+        return updated_transcription
 
     def process_audio_files(self, audio_file_paths: List[str], 
                             output_file_path: str):
@@ -238,26 +251,50 @@ class Listener:
                              "capitalization, and use only the context ",
                              "provided.")
             AUDIO_FILE_PATHS = [
-                'data/speech/no_time_to_make_social_media_content_0.mp3',
-                'data/speech/no_time_to_make_social_media_content_1.mp3',
-                'data/speech/no_time_to_make_social_media_content_3.mp3'
+                'data/audio/audio_0.mp3',
+                'data/audio/audio_1.mp3',
+                'data/audio/audio_2.mp3'
             ]
-            OUTPUT_FILE_PATH = ('data/text/',
-                                'no_time_to_make_social_media_content.txt')
-
+            OUTPUT_FILE_PATH = 'data/text/audio.txt'
             # Init Listener
             listener = Listener(SYSTEM_PROMPT)
             # Transcribe via Listener
             listener.process_audio_files(AUDIO_FILE_PATHS, OUTPUT_FILE_PATH)
         """
+        # Check if output file already exists
+        if os.path.exists(output_file_path):
+            # If it does, append/increment version number in filename
+            directory_path, full_filename = os.path.split(output_file_path)
+            base_name, extension = os.path.splitext(full_filename)
+            # Regex to find the version number at the end of the filename
+            version_pattern = re.compile(r"(.*)_v(\d+)$")
+            match = version_pattern.search(base_name)
+            if match:
+                # If there's already a version number, increment it
+                base_name = match.group(1)
+                version_number = int(match.group(2)) + 1
+            else:
+                # If there's no version number, add "_v2"
+                version_number = 2
+            # Create new filename with incremented version number
+            new_output_filename = f"{base_name}_v{version_number}{extension}"        
+            # Update output fp
+            output_file_path = os.path.join(directory_path,
+                                            new_output_filename)
+
+        # Start a file stream
         with open(output_file_path, 'a') as output_file:
+            # Per audio segment...
             for audio_file_path in audio_file_paths:
+                # Transcribe the audio
                 transcription = self.transcribe_audio(audio_file_path)
+                # Get the transcription revised
                 corrected_text = self.generate_corrected_transcript(
-                    transcription,
-                    audio_file_path
+                    transcription
                 )
+                # Append the revised transcription to the output file
                 output_file.write(corrected_text)
+
 
 if __name__ == '__main__':
     from dotenv import load_dotenv
