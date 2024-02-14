@@ -182,8 +182,7 @@ class Listener:
         with open(audio_file_path, 'rb') as audio_file:
             return Audio.transcribe(model='whisper-1', file=audio_file)['text']
 
-    def generate_corrected_transcript(self, transcription: str,
-                                      temperature: float = 0.0) -> str:
+    def generate_corrected_transcript(self, transcription: str) -> str:
         """
         Generates a corrected transcript for a given audio file.
 
@@ -253,7 +252,9 @@ class Listener:
         """
         with open(output_file_path, 'a') as output_file:
             for audio_file_path in audio_file_paths:
+                transcription = self.transcribe_audio(audio_file_path)
                 corrected_text = self.generate_corrected_transcript(
+                    transcription,
                     audio_file_path
                 )
                 output_file.write(corrected_text)
