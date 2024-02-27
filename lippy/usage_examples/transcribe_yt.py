@@ -29,12 +29,19 @@ logs_path = logs_dir/'speech-to-text_pipeline_logs.parquet'
 
 # YouTube video and playlist URLs to download and convert
 videos_and_playlists = [
-    # (Playlist) Dazs - How To Get Better At Apex Legends VOD Review
-    ('https://www.youtube.com/playlist?list=PL_waWDJmtQZN0tg3zU4z1QwZu'
-     '-Ih8lC2k'),
-    # (Video) Dazs -2023 Aim Guide To Improve Your Aim on Apex Legends (Aim 
-    # Categories & Self Improvement Tips)
-    'https://youtu.be/2evMaU5uvAM?feature=shared'
+    # # (Playlist) Dazs - How To Get Better At Apex Legends VOD Review
+    # ('https://www.youtube.com/playlist?list=PL_waWDJmtQZN0tg3zU4z1QwZu'
+    #  '-Ih8lC2k'),
+    # # (Video) Dazs -2023 Aim Guide To Improve Your Aim on Apex Legends (Aim 
+    # # Categories & Self Improvement Tips)
+    # 'https://youtu.be/2evMaU5uvAM?feature=shared'
+
+
+    # Coach Nihil
+    # Apex University
+    'https://www.youtube.com/playlist?list=PLcSdPyLCDoGKALvcoIXN8ONZ_UO4UZSEd',
+
+    
 ]
 
 # Init list to collect results
