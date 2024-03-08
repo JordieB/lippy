@@ -1,13 +1,19 @@
 # Lippy
 
-A Python application to retrieve upcoming events from Google Calendar and use an AI language model to find the next meeting.
+## Project Description
 
-## Description
-
-This project uses the `gcalwrapper` module to interact with the Google Calendar API and retrieve upcoming events. It then employs the `langchain` package to leverage an AI language model (GPT) to generate a response with details about the next meeting.
+A local LLM-based AI assistant built in Python with the help of LangChain, OpenAI (Whisper, GPT), Bark, and Chroma.
 
 ## Features
 
+### MVP
+- Create data for RAG from:
+    - YouTube Videos
+    - MP3 files
+    - Obsidian/Markdown files
+- TTS for ebooks
+
+### Planned
 - Retrieve upcoming events from Google Calendar
 - Use AI language model (GPT) to find the next meeting
 - Object-oriented design with proper documentation and linting
